@@ -1,0 +1,14 @@
+hs37d5.fa
+hs37d5.fa.fai
+neoepitope_prediction/pvacseq-fileprep/vep/cache
+workflows/neoepitope-prediction-filtering-ipass-cci.cwl
+workflows/pvactools-neoepitope-filtering-cci.cwl
+workflows/two-sample-hlatyping-cci.cwl
+workflows/three-sample-hlatyping-cci.cwl
+workflows/restricted-reads-hlahd-cci.cwl
+workflows/pvactools-neoepitope-prediction-cci.cwl
+workflows/test_scatter.cwl
+workflows/test_scatter_wrapper.cwl
+workflows/distil-cci.cwl
+workflows/ipass-deconv.cwl
+docker/pvactools_filters

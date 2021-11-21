@@ -1,0 +1,60 @@
+div.tocify {
+    width: 35% !important;
+    max-width: 320px !important;
+    max-height: 85%;
+}
+
+/* th {
+    text-align: left !important;
+} */
+
+/* .dataTables_filter {
+    float: left !important;
+} */
+
+/* .dt-buttons {
+    margin: 0.333em !important;
+} */
+/* .dt-button, .paginate_button {
+    font-size: 0.88em !important;
+    line-height: 1.6em !important;
+} */
+
+/* .th, .tr {
+    padding: 0px !important;
+} */
+
+/* .toc-content {
+    padding-left: 0px !important;
+} */
+
+.main-container {
+    max-width: 1500px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+.table {
+    border: solid 1px #ddd !important; 
+}
+td {
+    font-size: 11px !important; 
+}
+th.dt-centre-bt.sorting {
+    line-height: 1.5 !important;
+    padding: 4px !important;
+}
+
+/* .datatables {
+    border: solid 1px #ddd !important;
+    border-radius: 5px !important;
+    padding: 5px;
+} */
+
+.form-control {
+    border: solid 1px #ddd !important;
+    border-radius: 5px !important;
+    box-shadow: none !important;
+    padding: 3px !important;
+    font-size: 12px !important;
+}

@@ -1,0 +1,416 @@
+---
+title: "disTIL Immunoprofiling Report"
+output:
+  html_document:
+    theme: paper
+    highlight: tango
+    css: report_styles.css
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    number_sections: TRUE
+params:
+  hla_json: NAMESPACE
+  pvacseq_i: NAMESPACE
+  pvacseq_ii: NAMESPACE
+  pvacfuse_i: NAMESPACE
+  pvacfuse_ii: NAMESPACE
+  tmb: NAMESPACE
+  coding_missense_variants: NAMESPACE
+  epic_deconv: NAMESPACE
+  quantiseq_deconv: NAMESPACE
+  ipass: NAMESPACE
+  pid: NAMESPACE
+always_allow_html: true
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+subtitle: "`r paste('Patient ', params$pid)`"
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(rjson)
+library(DT)
+library(dplyr)
+library(stringr)
+library(ggplot2)
+
+date = format(Sys.time(), '%d %B, %Y')
+```
+
+This immunoprofiling report was generated using the disTIL toolkit on `r date`. More information about the disTIL toolkit can be found [here](https://github.com/rbowenj/immunoprofiling).
+
+See the report appendices for more detail about how this report was generated.
+
+# HLA Types
+```{r echo = FALSE}
+
+# test <- '~/Downloads/P007301_threeSample_hla.consensus.json'
+# test_clin <- '~/Downloads/P007301_threeSample_hla.consensus.clinSig.json'
+
+
+hla_from_json <- rjson::fromJSON(file = params$hla_json)
+hla_df <- as.data.frame(hla_from_json)
+
+hla_df <- as.data.frame(hla_from_json)
+
+small_hla_df <- hla_df
+cols <- c('HLA-A', 'HLA-B', 'HLA-C', 'HLA-DRB1', 'HLA-DQA1', 'HLA-DQB1', 'HLA-DPA1', 'HLA-DPB1', 'HLA-DMA', 'HLA-DMB', 'HLA-DOA','HLA-DOB','HLA-DRA', 'HLA-DRB2', 'HLA-DRB3', 'HLA-DRB4', 'HLA-DRB5', 'HLA-DRB6', 'HLA-DRB7', 'HLA-DRB8', 'HLA-DRB9', 'HLA-E', 'HLA-F', 'HLA-G', 'HLA-H', 'HLA-J', 'HLA-K', 'HLA-L', 'HLA-V')
+colnames(small_hla_df) <- cols
+small_hla_df <- small_hla_df[, c('HLA-A', 'HLA-B', 'HLA-C','HLA-DRA', 'HLA-DRB1', 'HLA-DRB3', 'HLA-DRB4', 'HLA-DRB5', 'HLA-DQA1', 'HLA-DQB1', 'HLA-DPA1', 'HLA-DPB1', 'HLA-DMA', 'HLA-DMB', 'HLA-DOA','HLA-DOB', 'HLA-DRB2',  'HLA-DRB6', 'HLA-DRB7', 'HLA-DRB8', 'HLA-DRB9', 'HLA-E', 'HLA-F', 'HLA-G', 'HLA-H', 'HLA-J', 'HLA-K', 'HLA-L', 'HLA-V')]
+t_df <- t(small_hla_df)
+
+t_df <- cbind('HLA Gene' = rownames(t_df), t_df)
+rownames(t_df) <- 1:nrow(t_df)
+colnames(t_df) <- c('HLA Gene', 'Allele 1', 'Allele 2')
+```
+
+```{r}
+library(DT)
+DT::datatable(t_df, 
+              style = 'bootstrap',
+              extensions = 'Buttons', 
+              rownames = F, 
+              options = list(
+                bFilter = F, 
+                paginate = F, 
+                info = F, 
+                ordering = F, 
+                dom = 'frtipB', 
+                buttons = c('copy', 'csv', 'excel'),
+                columnDefs = list(list(className = 'dt-center-bt', targets = "_all"))
+              )
+            )
+```
+
+---
+
+# Predicted Neoepitopes
+
+## Candidate SNV- and Indel-Derived Neoepitopes
+### HLA Class-I Binders
+
+```{r echo=FALSE}
+# # Read pvacseq CSVs
+# pvacseq_snvs <- read.delim(file = params$pvacseq_snv_csv, sep = "\t", header = T, stringsAsFactors = F)
+# 
+# colnames(pvacseq_snvs) <- c('#', 'Gene', 'AA change', 'Number of transcripts', 'Mutant peptide', 'Mutation position', 'HLA-I alleles', 'HLA-II alleles', 'Mutant IC50', 'DAI', 'Mutant percentile', 'Percentile mutant/wildtype')
+# pvacseq_snvs <- pvacseq_snvs %>% select('Gene', 'AA change', 'Number of transcripts', 'Mutant peptide', 'Mutation position', 'HLA-I alleles', 'HLA-II alleles', 'Mutant IC50', 'DAI', 'Mutant percentile', 'Percentile mutant/wildtype')
+# 
+# DT::datatable(pvacseq_snvs, class = 'table table-responsive table-bordered table-condensed', extensions = 'Buttons', rownames = T,  options = list(scrollY = "200px", sScrollX = "100%", scrollCollapse = T, paginate = F, dom = 'frtipB', buttons = c('copy', 'csv', 'excel')))
+
+
+# Read pvacseq CSV
+# pvacseq_filt <- read.delim(file = params$pvacseq_filtered, sep = "\t", header = T, stringsAsFactors = F)
+# pvacseq_snvs$`#` <- seq.int(nrow(pvacseq_snvs))
+# pvacseq_snvs <- pvacseq_snvs[0:-1] %>%
+#   select(`#`, everything())
+
+# pvacseq_snvs <- pvacseq_snvs %>% select(all_of(cols[0:-1]))
+
+# Get number of DAI col to order on
+# dai_col <- grep("^DAI$", colnames(pvacseq_snvs))
+
+# pvacseq_ii <- read.delim(file = '~/Downloads/LKCGP-P007301-294171-01-04-01-R1.filtered.tsv', sep = "\t", header = T, stringsAsFactors = F)
+# pvacseq_i <- read.delim(file = '~/Downloads/_1_LKCGP-P007301-294171-01-04-01-R1.filtered.tsv', sep = "\t", header = T, stringsAsFactors = F)
+# pvacfuse_ii <- read.delim(file = '~/Downloads/_1_LKCGP-P007301-294171-01-04-01-R1.filtered.junctionFiltered.tsv', sep = "\t", header = T, stringsAsFactors = F)
+# pvacfuse_i <- read.delim(file = '~/Downloads/LKCGP-P007301-294171-01-04-01-R1.filtered.junctionFiltered.tsv', sep = "\t", header = T, stringsAsFactors = F)
+
+pvacseq_ii <- read.delim(file = params$pvacseq_ii, sep = "\t", header = T, stringsAsFactors = F)
+pvacseq_i <- read.delim(file = params$pvacseq_i, sep = "\t", header = T, stringsAsFactors = F)
+pvacfuse_ii <- read.delim(file = params$pvacfuse_ii, sep = "\t", header = T, stringsAsFactors = F)
+pvacfuse_i <- read.delim(file = params$pvacfuse_i, sep = "\t", header = T, stringsAsFactors = F)
+
+pvacseq_cols <- c('Chromosome', 'Start', 'Stop', 'Reference', 'Variant', 'Variant.Type', 'Gene.Name', 'HLA.Allele', 'Peptide.Length', 'MT.Epitope.Seq', 'Best.MT.Score', 'Corresponding.WT.Score','Corresponding.Fold.Change', 'Best.MT.Percentile', 'Corresponding.WT.Percentile', 'Tumor.DNA.Depth', 'Tumor.DNA.VAF', 'Tumor.RNA.Depth', 'Tumor.RNA.VAF', 'Normal.Depth', 'Normal.VAF', 'Gene.Expression', 'difficult_n_terminal_residue', 'c_terminal_cysteine', 'c_terminal_proline', 'cysteine_count')
+pvacseq_colnames <- c('Chromosome', 'Start', 'Stop', 'Reference', 'Variant', 'Variant Type', 'Gene Name', 'HLA Allele', 'Neoepitope Length', 'Neoepitope Sequence', 'Mutant IC50', 'Wildtype IC50',' Corresponding Fold Change (DAI)', 'Mutant Percentile', 'Wildtype Percentile', 'Tumour DNA Depth', 'Tumour DNA VAF', 'Tumour RNA Depth', 'Tumour RNA VAF', 'Normal Depth', 'Normal VAF', 'Gene Expression', 'Difficult N-terminal Residue?', 'C-terminal Cysteine?', 'C-terminal Proline?', 'Cysteine Count')
+
+# Subset cols
+pvacseq_ii <- pvacseq_ii[, pvacseq_cols]
+pvacseq_i <- pvacseq_i[, pvacseq_cols]
+colnames(pvacseq_ii) <- pvacseq_colnames
+colnames(pvacseq_i) <- pvacseq_colnames
+
+pvacfuse_cols <- c('Chromosome', 'Start', 'Stop', 'Variant.Type', 'Gene.Name', 'HLA.Allele', 'Peptide.Length', 'MT.Epitope.Seq', 'Best.MT.Score', 'Best.MT.Percentile',  'X..Junction.reads', 'X..Spanning.fragments', 'difficult_n_terminal_residue', 'c_terminal_cysteine', 'c_terminal_proline', 'cysteine_count')
+pvacfuse_colnames <- c('Chromosome', 'Start', 'Stop', 'Variant Type', 'Gene Name', 'HLA Allele', 'Neoepitope Length', 'Neoepitope Sequence', 'Mutant IC50', 'Mutant Percentile','Junction Reads', 'Spanning Fragments', 'Difficult N-terminal Residue?', 'C-terminal Cysteine?', 'C-terminal Proline?', 'Cysteine Count')
+
+# Subset cols
+pvacfuse_ii <- pvacfuse_ii[, pvacfuse_cols]
+pvacfuse_i <- pvacfuse_i[, pvacfuse_cols]
+colnames(pvacfuse_ii) <- pvacfuse_colnames
+colnames(pvacfuse_i) <- pvacfuse_colnames
+
+
+
+DT::datatable(pvacseq_i, 
+              style = 'bootstrap',
+              extensions = 'Buttons', 
+              filter = 'top',
+              rownames = T, 
+              width = "100%", 
+              options = list(
+                scrollY = "500px", 
+                scrollX = '100%',
+                scrollCollapse = TRUE, 
+                paginate = F, 
+                autoWidth = TRUE, 
+                dom = 'frtipB', 
+                buttons = c('copy', 'csv', 'excel'),
+                columnDefs = list(list(className = 'dt-center-bt', targets = "_all")),
+                searchHighlight = TRUE
+              )
+            )
+```
+
+### HLA Class-II Binders
+```{r}
+DT::datatable(pvacseq_ii, 
+              style = 'bootstrap',
+              extensions = 'Buttons', 
+              filter = 'top',
+              rownames = T, 
+              width = "100%", 
+              options = list(
+                scrollY = "500px", 
+                scrollX = '100%',
+                scrollCollapse = TRUE, 
+                paginate = F, 
+                autoWidth = TRUE, 
+                dom = 'frtipB', 
+                buttons = c('copy', 'csv', 'excel'),
+                columnDefs = list(list(className = 'dt-center-bt', targets = "_all")),
+                searchHighlight = TRUE
+              )
+            )
+
+```
+
+## Candidate Fusion-Derived Neoepitopes
+### HLA Class-I Binders
+```{r}
+DT::datatable(pvacfuse_i, 
+              style = 'bootstrap',
+              extensions = 'Buttons', 
+              filter = 'top',
+              rownames = T, 
+              width = "100%", 
+              options = list(
+                scrollY = "500px", 
+                scrollX = '100%',
+                scrollCollapse = TRUE, 
+                paginate = F, 
+                autoWidth = TRUE, 
+                dom = 'frtipB', 
+                buttons = c('copy', 'csv', 'excel'),
+                columnDefs = list(list(className = 'dt-center-bt', targets = "_all")),
+                searchHighlight = TRUE
+              )
+            )
+```
+
+### HLA Class-II Binders
+```{r}
+DT::datatable(pvacfuse_ii, 
+              style = 'bootstrap',
+              extensions = 'Buttons', 
+              filter = 'top',
+              rownames = T, 
+              width = "100%", 
+              options = list(
+                scrollY = "500px", 
+                scrollX = '100%',
+                scrollCollapse = TRUE, 
+                paginate = F, 
+                autoWidth = TRUE, 
+                dom = 'frtipB', 
+                buttons = c('copy', 'csv', 'excel'),
+                columnDefs = list(list(className = 'dt-center-bt', targets = "_all")),
+                searchHighlight = TRUE
+              )
+            )
+
+```
+
+
+---
+
+
+# Tumour Mutational Burden (TMB)
+
+```{r}
+vars <- params$coding_missense_variants
+tmb <- params$tmb
+
+# print(paste0("Number of canonical missense coding variants =", vars, sep=" "))
+# print(paste0("SNV TMB score =", tmb, sep=" "))
+
+```
+
+**Number of canonical missense coding variants = `r vars[1]`** 
+
+
+**SNV TMB score = `r tmb[1]`**
+
+---
+
+
+# IPASS Gene Expression Classification
+
+```{r}
+ipass_df <- read.delim(params$ipass, sep='\t', header=TRUE)
+ipass_score <- ipass_df$IPASS
+# print(paste0("IPASS score =", ipass$ipass, sep=" "))
+```
+
+**IPASS score = `r ipass_score[1]`**
+
+
+```{r}
+DT::datatable(ipass_df, 
+              style = 'bootstrap',
+              extensions = 'Buttons', 
+              rownames = T, 
+              width = "100%", 
+              options = list(
+                scrollY = "500px", 
+                scrollX = '100%',
+                scrollCollapse = TRUE, 
+                paginate = F, 
+                autoWidth = TRUE, 
+                dom = 'frtipB', 
+                buttons = c('copy', 'csv', 'excel'),
+                columnDefs = list(list(className = 'dt-center-bt', targets = "_all")),
+                searchHighlight = TRUE
+              )
+            )
+```
+
+---
+# Immune Cell Type Deconvolution
+## EPIC Deconvolution
+```{r, fig.width=8,fig.height=3}
+epic_df <- read.delim(params$epic_deconv, sep='\t', header=TRUE)
+# epic_df <- read.delim('~/Downloads/_1_P007301_epic.tsv', sep='\t', header=TRUE)
+colnames(epic_df) <- c('Cell Type', 'Cell Fraction')
+
+DT::datatable(epic_df, 
+              style = 'bootstrap',
+              extensions = 'Buttons', 
+              rownames = T, 
+              width = "100%", 
+              options = list(
+                scrollY = "500px", 
+                scrollX = '100%',
+                scrollCollapse = TRUE, 
+                paginate = F, 
+                autoWidth = TRUE, 
+                dom = 'rtipB', 
+                buttons = c('copy', 'csv', 'excel'),
+                columnDefs = list(list(className = 'dt-center-bt', targets = "_all"))
+              )
+            )
+
+ggplot(epic_df, aes(y=params$pid, x = `Cell Fraction`, fill = `Cell Type`)) + 
+  geom_bar(stat='identity') +
+  theme(
+        axis.text = element_text(size=10),
+        axis.title.y = element_blank(),
+        axis.title.x = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size=10),
+        legend.position = 'top') +
+  scale_fill_manual(
+    values = c('#FFFF3F', '#D4D700', '#20a657',  '#006dba', '#6c51ac', '#bc58ce','#ff5c8a', '#C71F37')) +
+  labs(fill = 'Cell type', x = 'Cell fraction')
+
+```
+
+## quanTIseq Deconvolution
+
+```{r, fig.width=8,fig.height=3}
+quant_df <- read.delim(params$quantiseq_deconv, sep='\t', header=TRUE)
+# quant_df <- read.delim('~/Downloads/_1_P007301_quantiseq.tsv', sep='\t', header=TRUE)
+colnames(quant_df) <- c('Cell Type', 'Cell Fraction')
+row_order <- c('B cell', 'T cell CD4+', 'T')
+
+
+DT::datatable(quant_df, 
+              style = 'bootstrap',
+              extensions = 'Buttons', 
+              rownames = T, 
+              width = "100%", 
+              options = list(
+                scrollY = "500px", 
+                scrollX = '100%',
+                scrollCollapse = TRUE, 
+                paginate = F, 
+                autoWidth = TRUE, 
+                dom = 'rtipB', 
+                buttons = c('copy', 'csv', 'excel'),
+                columnDefs = list(list(className = 'dt-center-bt', targets = "_all"))
+              )
+            )
+
+ggplot(quant_df, aes(y=params$pid, x = `Cell Fraction`, fill = `Cell Type`)) + 
+  geom_bar(stat='identity') +
+  theme(
+        axis.text = element_text(size=10),
+        axis.title.y = element_blank(),
+        axis.title.x = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size=10),
+        legend.position = 'top') +
+  scale_fill_manual(
+    labels = c('B cell', 'Non-regulatory CD4+ T cell', 'CD8+ T cell', 'Classically activated macrophages (M1)', 'Alternatively activated macrophages (M2)', 'Monocyte', 'Dendritic cell', 'Neutrophil', 'NK cell', 'Regulatory CD4+ T cell', 'Uncharacterised cell'), 
+    values = c('#FFFF3F', '#a3d145', '#177e89', '#00bcd2', '#006dba', '#6411AD', '#973AA8','#fbb1bd', '#ff5c8a', '#20a657', '#C71F37')) +
+  labs(fill = 'Cell type', x = 'Cell fraction')
+```
+
+\newpage
+
+# Appendix
+
+## HLA Typing Method
+The disTIL consensus HLA typing module uses HLA-HD (v1.4.0) to conduct HLA typing from two or three samples for a given patient, producing two or three sets of candidate alleles. For each typed HLA gene, a pair of consensus alleles is calculated based on concordance between the candidate allele sets. There is no restriction on which samples are input to the module provided they are compatible with HLA-HD, meaning any combination of tumour and normal WGS, WES, and RNA-seq samples can be used.
+
+The HLA section of this report displays a table of all HLA alleles typed by the disTIL HLA module (using HLA-HD), including a clinically relevant subset of HLA alleles which is highlighted in bold text. The 'clinically significant' HLA subset includes most of the protein coding Class I and II HLA genes which are implicated in peptide presentation to T cells while excluding HLA Class I pseudogenes (HLA-H, -J, -K, -L, -V), non-classical Class I genes (HLA-E, -F, -G), Class II pseudogenes (HLA-DRB2, -DRB6, -DRB7, -DRB8, and -DRB9), and the non-classical Class II genes (HLA-DOA, -DOB, -DMA and -DMB)121. 
+
+## Neoepitope Prediction Method
+disTIL uses pVACtools  (https://pvactools.readthedocs.io/en/latest/) to conduct neoepitope prediction. pVACseq was used to predict neoepitopes derived from SNVs and indels, while pVACfuse was used to predict neoepitopes derived from gene fusions.
+
+The neoepitopes included in this report are those output in the 'filtered' pVACtools reports. These can be interpreted as top-tier neoepitopes, which have passed all pVACtools filters. Note that the neoepitopes in each table are ranked (by default) according to pVACtools criteria, where the neoepitopes listed first are considered the best candidates.
+To supplement the default filtering and ranking conducted by pVACfuse, disTIL annotates pVACfuse neoepitopes with junction read counts and spanning fragment counts.
+
+Each column should be interpreted as follows (see the pVACtools documentation for more details):
+
+* Chromosome, Start, Stop, Variant Type: details of the underlying somatic mutation which causes a predicted neoepitope
+* Variant: the amino acid change in the neoepitope (compared to the normal 'wildtype' sequence)
+* Gene Name: the HGNC symbol for the gene(s) affected by this somatic variant
+* HLA Allele: the HLA allele whose corresponding HLA molecule is most likely to present the predited neoepitope
+* Neoepitope Sequence: the predicted neoepitope derived from the somatic mutation
+* Mutant IC50: the HLA binding affinity of the predicted neoepitope for the HLA allele, expressed as an IC50 score (IC50 < 500 nm indicates a strong binder and therefore a better neoepitope candidate)
+* Wildtype IC50: the HLA binding affinity of the corresponding normal, unmutated peptide for the HLA allele (a better neoepitope candidate has low mutant IC50 and high wildtype IC50, indicating preferential binding of the mutant over wildtype)
+* Corresponding Fold Change (DAI): the wildtype IC50 divided by the mutant IC50, also known as Differential Agretopic Index (DAI) (NA if there is no corresponding wildtype sequence)
+* Mutant Percentile: predicted percentile rank for this neoepitope
+* Wildtype Percentile: predicted percentile rank for the corresponding wildtype peptide
+* Tumour DNA Depth: the tumour DNA depth at this locus
+* Tumour DNA VAF: the variant allele frequency (VAF) at this locus, determined from DNA
+* Tumour RNA Depth: the tumour RNA depth at this locus
+* Tumour RNA VAF: the variant allele frequency (VAF) at this locus, determined from RNA
+* Gene Expression: expression level of the affected gene
+* Difficult N-terminal Residue?, C-terminal Cysteine? , C-terminal Proline? Cysteine Count: whether this neoepitope has a difficult residue at the N-terminal (Glutamine, Glutamic acid, Cysteine), C-terminal cysteine or C-terminal proline,  or a high cysteine count all of which negatively impacts the ability to manufacture this neoepitope for immunotherapy
+* Junction Reads, Spanning Fragments: the number of junction reads and spanning fragments supporting the underlying gene fusion (at least one of each indicates a high-quality fusion-derived neoepitope)
+
+
+## TMB Calculation
+TMB is calculated as the number of missense canonical variants per megabase of the coding exome.
+
+The coding exome size includes Ensembl coding regions excluding ENCODE blacklisted regions.
+To calculate the number of coding missense variants, the disTIL TMB module filters a VEP-annotated VCF to retain only ‘PASS’ variants, intersects it with the high-quality coding exome BED for the selected genome assembly, and counts the number of variants which VEP predicted to have a missense effect on the overlapping Ensembl canonical transcript. The number of coding missense variants is divided by the coding exome size for the selected genome assembly to yield TMB as the number of missense canonical variants per megabase of the coding exome. The number of coding missense variants and the TMB are output in text files.
+
+## Gene Expression Classification Method
+The disTIL gene expression classification module uses the IPASS algorithm in a single patient mode taking gene expression levels as input.
+
+The Immune Paediatric Signature Score (IPASS) is a transcriptional signature used to classify paediatric tumours as immune hot or cold based on the predicted level of CD8+ T cell infiltration. It was developed by Chelsea Mayoh at the Children’s Cancer Institute using a cohort of paediatric tumours partitioned as immune hot or cold based on immunohistochemical (IHC) evaluation of T cell infiltration. Tumour gene expression profiles were generated from bulk RNA-seq data and used, along with the results of IHC, to train a random forest machine learning classifier. The 20 genes whose expression levels best distinguished hot and cold tumours were selected. Their expression levels across 291 CNS and extracranial tumours were used to generate a normalised IPASS score between -1 and 1, where cold tumours are those with a score below -0.15 and hot tumours are those with a score above 0.45. Tumours with an IPASS score between -0.15 and 0.45 are considered as having ‘intermediate’ phenotype (neither hot nor cold). IPASS was validated on two external paediatric cohorts.
+
+## Immune Cell Type Deconvolution Method
+This report includes immune cell type deconvolution determined using two methods: EPIC and quanTIseq. The cell fractions generated by both tools can be interpreted as absolute scores, allowing comparison within and between samples. The stacked bar plots included in this report aid in visualisation of the cell fraction for each cell type within the analysed sample. Note that the results generated by EPIC and quanTIseq are likely to differ, and include different cell types. Both tools quantify B cells, CD8+ T cells, NK cells, and uncharacterised cells, allowing direct comparison. The sum of the quanTIseq CD4+ regulatory and non-regulatory T cells gives the total fraction of CD4+ T cells, which can be directly compared to the CD4+ T cell fraction generated by EPIC. Likewise, summing the M1 and M2 macrophage cell fractions determined by quanTIseq gives the total macrophage cell fraction.
+
