@@ -11,17 +11,17 @@ output:
       smooth_scroll: true
     number_sections: TRUE
 params:
-  hla_json: NAMESPACE
-  pvacseq_i: NAMESPACE
-  pvacseq_ii: NAMESPACE
-  pvacfuse_i: NAMESPACE
-  pvacfuse_ii: NAMESPACE
-  tmb: NAMESPACE
-  coding_missense_variants: NAMESPACE
-  epic_deconv: NAMESPACE
-  quantiseq_deconv: NAMESPACE
-  ipass: NAMESPACE
-  pid: NAMESPACE
+  hla_json: NA
+  pvacseq_i: NA
+  pvacseq_ii: NA
+  pvacfuse_i: NA
+  pvacfuse_ii: NA
+  tmb: NA
+  coding_missense_variants: NA
+  epic_deconv: NA
+  quantiseq_deconv: NA
+  ipass: NA
+  pid: NA
 always_allow_html: true
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 subtitle: "`r paste('Patient ', params$pid)`"
@@ -44,29 +44,21 @@ See the report appendices for more detail about how this report was generated.
 # HLA Types
 ```{r echo = FALSE}
 
-# test <- '~/Downloads/P007301_threeSample_hla.consensus.json'
-# test_clin <- '~/Downloads/P007301_threeSample_hla.consensus.clinSig.json'
-
-
-hla_from_json <- rjson::fromJSON(file = params$hla_json)
-hla_df <- as.data.frame(hla_from_json)
-
-hla_df <- as.data.frame(hla_from_json)
-
-small_hla_df <- hla_df
-cols <- c('HLA-A', 'HLA-B', 'HLA-C', 'HLA-DRB1', 'HLA-DQA1', 'HLA-DQB1', 'HLA-DPA1', 'HLA-DPB1', 'HLA-DMA', 'HLA-DMB', 'HLA-DOA','HLA-DOB','HLA-DRA', 'HLA-DRB2', 'HLA-DRB3', 'HLA-DRB4', 'HLA-DRB5', 'HLA-DRB6', 'HLA-DRB7', 'HLA-DRB8', 'HLA-DRB9', 'HLA-E', 'HLA-F', 'HLA-G', 'HLA-H', 'HLA-J', 'HLA-K', 'HLA-L', 'HLA-V')
-colnames(small_hla_df) <- cols
-small_hla_df <- small_hla_df[, c('HLA-A', 'HLA-B', 'HLA-C','HLA-DRA', 'HLA-DRB1', 'HLA-DRB3', 'HLA-DRB4', 'HLA-DRB5', 'HLA-DQA1', 'HLA-DQB1', 'HLA-DPA1', 'HLA-DPB1', 'HLA-DMA', 'HLA-DMB', 'HLA-DOA','HLA-DOB', 'HLA-DRB2',  'HLA-DRB6', 'HLA-DRB7', 'HLA-DRB8', 'HLA-DRB9', 'HLA-E', 'HLA-F', 'HLA-G', 'HLA-H', 'HLA-J', 'HLA-K', 'HLA-L', 'HLA-V')]
-t_df <- t(small_hla_df)
-
-t_df <- cbind('HLA Gene' = rownames(t_df), t_df)
-rownames(t_df) <- 1:nrow(t_df)
-colnames(t_df) <- c('HLA Gene', 'Allele 1', 'Allele 2')
-```
-
-```{r}
-library(DT)
-DT::datatable(t_df, 
+if (params$hla_json != 'NA') {
+  hla_from_json <- rjson::fromJSON(file = params$hla_json)
+  hla_df <- as.data.frame(hla_from_json)
+  
+  small_hla_df <- hla_df
+  cols <- c('HLA-A', 'HLA-B', 'HLA-C', 'HLA-DRB1', 'HLA-DQA1', 'HLA-DQB1', 'HLA-DPA1', 'HLA-DPB1', 'HLA-DMA', 'HLA-DMB', 'HLA-DOA','HLA-DOB','HLA-DRA', 'HLA-DRB2', 'HLA-DRB3', 'HLA-DRB4', 'HLA-DRB5', 'HLA-DRB6', 'HLA-DRB7', 'HLA-DRB8', 'HLA-DRB9', 'HLA-E', 'HLA-F', 'HLA-G', 'HLA-H', 'HLA-J', 'HLA-K', 'HLA-L', 'HLA-V')
+  colnames(small_hla_df) <- cols
+  small_hla_df <- small_hla_df[, c('HLA-A', 'HLA-B', 'HLA-C','HLA-DRA', 'HLA-DRB1', 'HLA-DRB3', 'HLA-DRB4', 'HLA-DRB5', 'HLA-DQA1', 'HLA-DQB1', 'HLA-DPA1', 'HLA-DPB1', 'HLA-DMA', 'HLA-DMB', 'HLA-DOA','HLA-DOB', 'HLA-DRB2',  'HLA-DRB6', 'HLA-DRB7', 'HLA-DRB8', 'HLA-DRB9', 'HLA-E', 'HLA-F', 'HLA-G', 'HLA-H', 'HLA-J', 'HLA-K', 'HLA-L', 'HLA-V')]
+  t_df <- t(small_hla_df)
+  
+  t_df <- cbind('HLA Gene' = rownames(t_df), t_df)
+  rownames(t_df) <- 1:nrow(t_df)
+  colnames(t_df) <- c('HLA Gene', 'Allele 1', 'Allele 2')
+  
+  DT::datatable(t_df, 
               style = 'bootstrap',
               extensions = 'Buttons', 
               rownames = F, 
@@ -80,6 +72,7 @@ DT::datatable(t_df,
                 columnDefs = list(list(className = 'dt-center-bt', targets = "_all"))
               )
             )
+}
 ```
 
 ---
@@ -90,57 +83,19 @@ DT::datatable(t_df,
 ### HLA Class-I Binders
 
 ```{r echo=FALSE}
-# # Read pvacseq CSVs
-# pvacseq_snvs <- read.delim(file = params$pvacseq_snv_csv, sep = "\t", header = T, stringsAsFactors = F)
-# 
-# colnames(pvacseq_snvs) <- c('#', 'Gene', 'AA change', 'Number of transcripts', 'Mutant peptide', 'Mutation position', 'HLA-I alleles', 'HLA-II alleles', 'Mutant IC50', 'DAI', 'Mutant percentile', 'Percentile mutant/wildtype')
-# pvacseq_snvs <- pvacseq_snvs %>% select('Gene', 'AA change', 'Number of transcripts', 'Mutant peptide', 'Mutation position', 'HLA-I alleles', 'HLA-II alleles', 'Mutant IC50', 'DAI', 'Mutant percentile', 'Percentile mutant/wildtype')
-# 
-# DT::datatable(pvacseq_snvs, class = 'table table-responsive table-bordered table-condensed', extensions = 'Buttons', rownames = T,  options = list(scrollY = "200px", sScrollX = "100%", scrollCollapse = T, paginate = F, dom = 'frtipB', buttons = c('copy', 'csv', 'excel')))
-
-
-# Read pvacseq CSV
-# pvacseq_filt <- read.delim(file = params$pvacseq_filtered, sep = "\t", header = T, stringsAsFactors = F)
-# pvacseq_snvs$`#` <- seq.int(nrow(pvacseq_snvs))
-# pvacseq_snvs <- pvacseq_snvs[0:-1] %>%
-#   select(`#`, everything())
-
-# pvacseq_snvs <- pvacseq_snvs %>% select(all_of(cols[0:-1]))
-
-# Get number of DAI col to order on
-# dai_col <- grep("^DAI$", colnames(pvacseq_snvs))
-
-# pvacseq_ii <- read.delim(file = '~/Downloads/LKCGP-P007301-294171-01-04-01-R1.filtered.tsv', sep = "\t", header = T, stringsAsFactors = F)
-# pvacseq_i <- read.delim(file = '~/Downloads/_1_LKCGP-P007301-294171-01-04-01-R1.filtered.tsv', sep = "\t", header = T, stringsAsFactors = F)
-# pvacfuse_ii <- read.delim(file = '~/Downloads/_1_LKCGP-P007301-294171-01-04-01-R1.filtered.junctionFiltered.tsv', sep = "\t", header = T, stringsAsFactors = F)
-# pvacfuse_i <- read.delim(file = '~/Downloads/LKCGP-P007301-294171-01-04-01-R1.filtered.junctionFiltered.tsv', sep = "\t", header = T, stringsAsFactors = F)
-
-pvacseq_ii <- read.delim(file = params$pvacseq_ii, sep = "\t", header = T, stringsAsFactors = F)
-pvacseq_i <- read.delim(file = params$pvacseq_i, sep = "\t", header = T, stringsAsFactors = F)
-pvacfuse_ii <- read.delim(file = params$pvacfuse_ii, sep = "\t", header = T, stringsAsFactors = F)
-pvacfuse_i <- read.delim(file = params$pvacfuse_i, sep = "\t", header = T, stringsAsFactors = F)
 
 pvacseq_cols <- c('Chromosome', 'Start', 'Stop', 'Reference', 'Variant', 'Variant.Type', 'Gene.Name', 'HLA.Allele', 'Peptide.Length', 'MT.Epitope.Seq', 'Best.MT.Score', 'Corresponding.WT.Score','Corresponding.Fold.Change', 'Best.MT.Percentile', 'Corresponding.WT.Percentile', 'Tumor.DNA.Depth', 'Tumor.DNA.VAF', 'Tumor.RNA.Depth', 'Tumor.RNA.VAF', 'Normal.Depth', 'Normal.VAF', 'Gene.Expression', 'difficult_n_terminal_residue', 'c_terminal_cysteine', 'c_terminal_proline', 'cysteine_count')
 pvacseq_colnames <- c('Chromosome', 'Start', 'Stop', 'Reference', 'Variant', 'Variant Type', 'Gene Name', 'HLA Allele', 'Neoepitope Length', 'Neoepitope Sequence', 'Mutant IC50', 'Wildtype IC50',' Corresponding Fold Change (DAI)', 'Mutant Percentile', 'Wildtype Percentile', 'Tumour DNA Depth', 'Tumour DNA VAF', 'Tumour RNA Depth', 'Tumour RNA VAF', 'Normal Depth', 'Normal VAF', 'Gene Expression', 'Difficult N-terminal Residue?', 'C-terminal Cysteine?', 'C-terminal Proline?', 'Cysteine Count')
 
-# Subset cols
-pvacseq_ii <- pvacseq_ii[, pvacseq_cols]
-pvacseq_i <- pvacseq_i[, pvacseq_cols]
-colnames(pvacseq_ii) <- pvacseq_colnames
-colnames(pvacseq_i) <- pvacseq_colnames
-
 pvacfuse_cols <- c('Chromosome', 'Start', 'Stop', 'Variant.Type', 'Gene.Name', 'HLA.Allele', 'Peptide.Length', 'MT.Epitope.Seq', 'Best.MT.Score', 'Best.MT.Percentile',  'X..Junction.reads', 'X..Spanning.fragments', 'difficult_n_terminal_residue', 'c_terminal_cysteine', 'c_terminal_proline', 'cysteine_count')
 pvacfuse_colnames <- c('Chromosome', 'Start', 'Stop', 'Variant Type', 'Gene Name', 'HLA Allele', 'Neoepitope Length', 'Neoepitope Sequence', 'Mutant IC50', 'Mutant Percentile','Junction Reads', 'Spanning Fragments', 'Difficult N-terminal Residue?', 'C-terminal Cysteine?', 'C-terminal Proline?', 'Cysteine Count')
 
-# Subset cols
-pvacfuse_ii <- pvacfuse_ii[, pvacfuse_cols]
-pvacfuse_i <- pvacfuse_i[, pvacfuse_cols]
-colnames(pvacfuse_ii) <- pvacfuse_colnames
-colnames(pvacfuse_i) <- pvacfuse_colnames
-
-
-
-DT::datatable(pvacseq_i, 
+if (params$pvacseq_i != 'NA') {
+  pvacseq_i <- read.delim(file = params$pvacseq_i, sep = "\t", header = T, stringsAsFactors = F)
+  pvacseq_i <- pvacseq_i[, pvacseq_cols]
+  colnames(pvacseq_i) <- pvacseq_colnames
+  
+  DT::datatable(pvacseq_i, 
               style = 'bootstrap',
               extensions = 'Buttons', 
               filter = 'top',
@@ -158,11 +113,18 @@ DT::datatable(pvacseq_i,
                 searchHighlight = TRUE
               )
             )
+}
+
 ```
-
 ### HLA Class-II Binders
-```{r}
-DT::datatable(pvacseq_ii, 
+```{r echo=FALSE}
+
+if (params$pvacseq_ii != 'NA') {
+  pvacseq_ii <- read.delim(file = params$pvacseq_ii, sep = "\t", header = T, stringsAsFactors = F)
+  pvacseq_ii <- pvacseq_ii[, pvacseq_cols]
+  colnames(pvacseq_ii) <- pvacseq_colnames
+  
+  DT::datatable(pvacseq_ii, 
               style = 'bootstrap',
               extensions = 'Buttons', 
               filter = 'top',
@@ -180,13 +142,20 @@ DT::datatable(pvacseq_ii,
                 searchHighlight = TRUE
               )
             )
-
+}
 ```
 
 ## Candidate Fusion-Derived Neoepitopes
 ### HLA Class-I Binders
-```{r}
-DT::datatable(pvacfuse_i, 
+
+```{r echo=FALSE}
+
+if (params$pvacfuse_i != 'NA') {
+  pvacfuse_i <- read.delim(file = params$pvacfuse_i, sep = "\t", header = T, stringsAsFactors = F)
+  pvacfuse_i <- pvacfuse_i[, pvacfuse_cols]
+  colnames(pvacfuse_i) <- pvacfuse_colnames
+  
+  DT::datatable(pvacfuse_i, 
               style = 'bootstrap',
               extensions = 'Buttons', 
               filter = 'top',
@@ -204,11 +173,19 @@ DT::datatable(pvacfuse_i,
                 searchHighlight = TRUE
               )
             )
+}
+
 ```
 
 ### HLA Class-II Binders
-```{r}
-DT::datatable(pvacfuse_ii, 
+```{r echo=FALSE}
+
+if (params$pvacfuse_ii != 'NA') {
+  pvacfuse_ii <- read.delim(file = params$pvacfuse_ii, sep = "\t", header = T, stringsAsFactors = F)
+  pvacfuse_ii <- pvacfuse_ii[, pvacfuse_cols]
+  colnames(pvacfuse_ii) <- pvacfuse_colnames
+  
+  DT::datatable(pvacfuse_ii, 
               style = 'bootstrap',
               extensions = 'Buttons', 
               filter = 'top',
@@ -226,9 +203,8 @@ DT::datatable(pvacfuse_ii,
                 searchHighlight = TRUE
               )
             )
-
+}
 ```
-
 
 ---
 
@@ -236,18 +212,24 @@ DT::datatable(pvacfuse_ii,
 # Tumour Mutational Burden (TMB)
 
 ```{r}
-vars <- params$coding_missense_variants
-tmb <- params$tmb
 
-# print(paste0("Number of canonical missense coding variants =", vars, sep=" "))
-# print(paste0("SNV TMB score =", tmb, sep=" "))
+vars <- ''
+tmb <- ''
+
+if (params$coding_missense_variants != 'NA') {
+  vars <- readLines(params$coding_missense_variants)
+}
+
+if (params$tmb != 'NA') {
+  tmb <- readLines(params$tmb)
+}
 
 ```
 
-**Number of canonical missense coding variants = `r vars[1]`** 
+**Number of canonical missense coding variants = `r vars`** 
 
 
-**SNV TMB score = `r tmb[1]`**
+**SNV TMB score = `r tmb`**
 
 ---
 
@@ -255,16 +237,21 @@ tmb <- params$tmb
 # IPASS Gene Expression Classification
 
 ```{r}
-ipass_df <- read.delim(params$ipass, sep='\t', header=TRUE)
-ipass_score <- ipass_df$IPASS
-# print(paste0("IPASS score =", ipass$ipass, sep=" "))
+ipass_score <- ''
+if (params$ipass != 'NA') {
+  ipass_df <- read.delim(params$ipass, sep='\t', header=TRUE)
+  ipass_score <- ipass_df$IPASS
+}
+
 ```
 
 **IPASS score = `r ipass_score[1]`**
 
 
 ```{r}
-DT::datatable(ipass_df, 
+
+if (params$ipass != 'NA') {
+  DT::datatable(ipass_df, 
               style = 'bootstrap',
               extensions = 'Buttons', 
               rownames = T, 
@@ -281,17 +268,20 @@ DT::datatable(ipass_df,
                 searchHighlight = TRUE
               )
             )
+}
+
 ```
 
 ---
 # Immune Cell Type Deconvolution
 ## EPIC Deconvolution
 ```{r, fig.width=8,fig.height=3}
-epic_df <- read.delim(params$epic_deconv, sep='\t', header=TRUE)
-# epic_df <- read.delim('~/Downloads/_1_P007301_epic.tsv', sep='\t', header=TRUE)
-colnames(epic_df) <- c('Cell Type', 'Cell Fraction')
 
-DT::datatable(epic_df, 
+if (params$epic_deconv != 'NA') {
+  epic_df <- read.delim(params$epic_deconv, sep='\t', header=TRUE)
+  colnames(epic_df) <- c('Cell Type', 'Cell Fraction')
+  
+  DT::datatable(epic_df, 
               style = 'bootstrap',
               extensions = 'Buttons', 
               rownames = T, 
@@ -307,8 +297,8 @@ DT::datatable(epic_df,
                 columnDefs = list(list(className = 'dt-center-bt', targets = "_all"))
               )
             )
-
-ggplot(epic_df, aes(y=params$pid, x = `Cell Fraction`, fill = `Cell Type`)) + 
+  
+  ggplot(epic_df, aes(y=params$pid, x = `Cell Fraction`, fill = `Cell Type`)) + 
   geom_bar(stat='identity') +
   theme(
         axis.text = element_text(size=10),
@@ -320,19 +310,21 @@ ggplot(epic_df, aes(y=params$pid, x = `Cell Fraction`, fill = `Cell Type`)) +
   scale_fill_manual(
     values = c('#FFFF3F', '#D4D700', '#20a657',  '#006dba', '#6c51ac', '#bc58ce','#ff5c8a', '#C71F37')) +
   labs(fill = 'Cell type', x = 'Cell fraction')
+  
+}
 
 ```
 
 ## quanTIseq Deconvolution
 
 ```{r, fig.width=8,fig.height=3}
-quant_df <- read.delim(params$quantiseq_deconv, sep='\t', header=TRUE)
-# quant_df <- read.delim('~/Downloads/_1_P007301_quantiseq.tsv', sep='\t', header=TRUE)
-colnames(quant_df) <- c('Cell Type', 'Cell Fraction')
-row_order <- c('B cell', 'T cell CD4+', 'T')
 
-
-DT::datatable(quant_df, 
+if (params$quantiseq_deconv != 'NA') {
+  quant_df <- read.delim(params$quantiseq_deconv, sep='\t', header=TRUE)
+  colnames(quant_df) <- c('Cell Type', 'Cell Fraction')
+  row_order <- c('B cell', 'T cell CD4+', 'T')
+  
+  DT::datatable(quant_df, 
               style = 'bootstrap',
               extensions = 'Buttons', 
               rownames = T, 
@@ -349,19 +341,22 @@ DT::datatable(quant_df,
               )
             )
 
-ggplot(quant_df, aes(y=params$pid, x = `Cell Fraction`, fill = `Cell Type`)) + 
-  geom_bar(stat='identity') +
-  theme(
-        axis.text = element_text(size=10),
-        axis.title.y = element_blank(),
-        axis.title.x = element_text(size = 12),
-        legend.title = element_text(size = 12),
-        legend.text = element_text(size=10),
-        legend.position = 'top') +
-  scale_fill_manual(
-    labels = c('B cell', 'Non-regulatory CD4+ T cell', 'CD8+ T cell', 'Classically activated macrophages (M1)', 'Alternatively activated macrophages (M2)', 'Monocyte', 'Dendritic cell', 'Neutrophil', 'NK cell', 'Regulatory CD4+ T cell', 'Uncharacterised cell'), 
-    values = c('#FFFF3F', '#a3d145', '#177e89', '#00bcd2', '#006dba', '#6411AD', '#973AA8','#fbb1bd', '#ff5c8a', '#20a657', '#C71F37')) +
-  labs(fill = 'Cell type', x = 'Cell fraction')
+  ggplot(quant_df, aes(y=params$pid, x = `Cell Fraction`, fill = `Cell Type`)) + 
+    geom_bar(stat='identity') +
+    theme(
+          axis.text = element_text(size=10),
+          axis.title.y = element_blank(),
+          axis.title.x = element_text(size = 12),
+          legend.title = element_text(size = 12),
+          legend.text = element_text(size=10),
+          legend.position = 'top') +
+    scale_fill_manual(
+      labels = c('B cell', 'Non-regulatory CD4+ T cell', 'CD8+ T cell', 'Classically activated macrophages (M1)', 'Alternatively activated macrophages (M2)', 'Monocyte', 'Dendritic cell', 'Neutrophil', 'NK cell', 'Regulatory CD4+ T cell', 'Uncharacterised cell'), 
+      values = c('#FFFF3F', '#a3d145', '#177e89', '#00bcd2', '#006dba', '#6411AD', '#973AA8','#fbb1bd', '#ff5c8a', '#20a657', '#C71F37')) +
+    labs(fill = 'Cell type', x = 'Cell fraction')
+
+}
+
 ```
 
 \newpage

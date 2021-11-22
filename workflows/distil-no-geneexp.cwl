@@ -1,28 +1,14 @@
 class: Workflow
 cwlVersion: v1.0
-id: distil
+id: distil_no_geneexp
 doc: >-
-  # disTIL
+  # disTIL (no gene expression)
 
-  This workflow runs the disTIL immunoprofiling toolkit with:
+  This workflow runs the disTIL immunoprofiling toolkit **without** the gene
+  expression module (which is specific to paediatric cancer).
 
-  - Three-sample consensus HLA typing
-
-  - Somatic VCF annotation (VEP, gene expression, transcript expression, DNA BAM
-  readcounts, RNA BAM readcounts)
-
-  - Fusion annotation with AGfusion
-
-  - pVACseq and pVACfuse neoepitope prediction
-
-  - pVACfuse neoepitope annotation from STAR-Fusion TSV
-
-  - TMB calculation
-
-  - Gene expression classification (IPASS)
-
-  - Immune cell type deconvolution (EPIC and quanTIseq)
-label: distil
+  This workflow can be used for the immunoprofiling of adult tumours.
+label: distil_no_geneExp
 $namespaces:
   sbg: 'https://www.sevenbridges.com/'
 inputs:
@@ -431,13 +417,6 @@ outputs:
     label: TMB Score
     'sbg:x': 862.2869873046875
     'sbg:y': 106.96875
-  - id: ipass_score_file
-    outputSource:
-      - ipass_patient/ipass_score_file
-    type: File
-    label: IPASS Score File
-    'sbg:x': 862.2869873046875
-    'sbg:y': 1307.6875
   - id: quanitseq_deconv
     outputSource:
       - immunedeconv_1/quanitseq_deconv
@@ -809,22 +788,6 @@ steps:
     label: three-sample-hlatyping
     'sbg:x': 281.765625
     'sbg:y': 672.328125
-  - id: ipass_patient
-    in:
-      - id: patient_id
-        source: patient_id
-      - id: gene_expr_file
-        source: gene_expression_file
-      - id: gene_col
-        source: gene_col
-      - id: expr_col
-        source: expr_col
-    out:
-      - id: ipass_score_file
-    run: ../tools/ipass-patient.cwl
-    label: ipass-patient
-    'sbg:x': 281.765625
-    'sbg:y': 970.265625
   - id: immunedeconv_1
     in:
       - id: gene_expr
@@ -1043,8 +1006,6 @@ steps:
         source: tmb/variants
       - id: tmb
         source: tmb/tmb
-      - id: ipass
-        source: ipass_patient/ipass_score_file
       - id: epic_deconv
         source: immunedeconv_1/epic_deconv
       - id: quant_deconv

@@ -6,7 +6,7 @@ id: distil_report
 baseCommand: []
 inputs:
   - id: hla_json
-    type: File
+    type: File?
     label: HLA Consensus JSON
     doc: >-
       A JSON file containing all HLA consensus alleles. All HLA genes typed by
@@ -17,34 +17,44 @@ inputs:
     label: Patient ID
     doc: ID for the patient.
   - id: pvacseq_i
-    type: File
+    type: File?
+    label: pVACseq MHC-I Filtered Report
   - id: pvacseq_ii
-    type: File
+    type: File?
+    label: pVACseq MHC-II Filtered Report
   - id: pvacfuse_i
-    type: File
+    type: File?
+    label: pVACfuse MHC-I Filtered Report
   - id: pvacfuse_ii
-    type: File
+    type: File?
+    label: pVACfuse MHC-II Filtered Report
   - id: coding_missense_variants
-    type: int
+    type: File?
+    label: Coding Missense Variants File
   - id: tmb
-    type: float
+    type: File?
+    label: TMB File
+    'sbg:fileTypes': TXT
   - id: ipass
-    type: File
+    type: File?
+    label: IPASS Results
   - id: epic_deconv
-    type: File
+    type: File?
+    label: EPIC Deconvolution Results
   - id: quant_deconv
-    type: File
+    type: File?
+    label: quanTIseq Deconvolution Results
 outputs:
-  - id: hla_report
-    doc: A PDF report containing the HLA consensus results.
-    label: HLA Report
+  - id: disTIL_report
+    doc: An HTML report containing the summarised results of immunoprofiling.
+    label: disTIL Immunoprofiling Report
     type: File
     outputBinding:
       glob: |-
         ${
             return inputs.patient_id + '_distilReport.html'
         }
-    'sbg:fileTypes': PDF
+    'sbg:fileTypes': HTML
 doc: >-
   # About this tool
 
@@ -82,7 +92,42 @@ arguments:
     shellQuote: false
     valueFrom: |-
       ${
-          var cmd = 'Rscript -e "rmarkdown::render(\'report_generator.Rmd\',params=list(hla_json=\'./' + inputs.hla_json.basename + '\', pvacseq_i=\'./' + inputs.pvacseq_i.basename + '\', pvacseq_ii=\'./' + inputs.pvacseq_ii.basename + '\', pvacfuse_i=\'./' + inputs.pvacfuse_i.basename + '\', pvacfuse_ii=\'./' + inputs.pvacfuse_ii.basename + '\', tmb=\'' + inputs.tmb + '\', coding_missense_variants=\'' + inputs.coding_missense_variants + '\', ipass=\'' + inputs.ipass.basename + '\',  epic_deconv=\'' + inputs.epic_deconv.basename + '\', quantiseq_deconv=\'' + inputs.quant_deconv.basename +  '\', pid=\'' + inputs.patient_id + '\'), output_file=paste(\'' + inputs.patient_id + '\', \'_distilReport.html\', sep=\'\'))\"'
+          var cmd = 'Rscript -e "rmarkdown::render(\'report_generator.Rmd\',params=list(pid=\'' + inputs.patient_id + '\''
+          
+          
+          if (inputs.hla_json) {
+              cmd = cmd + ', hla_json=\'./' + inputs.hla_json.basename + '\''
+          }
+          if (inputs.pvacseq_i) {
+              cmd = cmd + ', pvacseq_i=\'./' + inputs.pvacseq_i.basename + '\''
+          }
+          if (inputs.pvacseq_ii) {
+              cmd = cmd + ', pvacseq_ii=\'./' + inputs.pvacseq_ii.basename + '\''
+          }
+          if (inputs.pvacfuse_i) {
+              cmd = cmd + ', pvacfuse_i=\'./' + inputs.pvacfuse_i.basename + '\''
+          }
+          if (inputs.pvacfuse_ii) {
+              cmd = cmd + ', pvacfuse_ii=\'./' + inputs.pvacfuse_ii.basename + '\''
+          }
+          if (inputs.coding_missense_variants) {
+              cmd = cmd + ', coding_missense_variants=\'./' + inputs.coding_missense_variants.basename + '\''
+          }
+          if (inputs.tmb) {
+              cmd = cmd + ', tmb=\'./' + inputs.tmb.basename + '\''
+          }
+          if (inputs.ipass) {
+              cmd = cmd + ', ipass=\'./' + inputs.ipass.basename + '\''
+          }
+          if (inputs.epic_deconv) {
+              cmd = cmd + ', epic_deconv=\'./' + inputs.epic_deconv.basename + '\''
+          }
+          if (inputs.quantiseq_deconv) {
+              cmd = cmd + ', quantiseq_deconv=\'./' + inputs.quantiseq_deconv.basename + '\''
+          }
+          
+          cmd = cmd + '), output_file=paste(\'' + inputs.patient_id + '\', \'_distilReport.html\', sep=\'\'))\"'
+
           return cmd
       }
   - position: 10
@@ -107,7 +152,9 @@ requirements:
       - $(inputs.ipass)
       - $(inputs.epic_deconv)
       - $(inputs.quant_deconv)
+      - $(inputs.tmb)
+      - $(inputs.coding_missense_variants)
   - class: InlineJavascriptRequirement
-'sbg:wrapperAuthor': Rachel Bowen-James <rbowen-james@ccia.org.au>
 'sbg:toolkit': disTIL
 'sbg:toolkitVersion': 1.0.0
+'sbg:wrapperAuthor': Rachel Bowen-James <rbowen-james@ccia.org.au>
